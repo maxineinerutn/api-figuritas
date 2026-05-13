@@ -1,0 +1,172 @@
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import dotenv from "dotenv";
+import Figurita from "./models/figurita.js";
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// ----------- UPLOADS ----------
+const UPLOADS_DIR = "./uploads";
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
+app.use("/uploads", express.static(UPLOADS_DIR));
+
+const storage = multer.diskStorage({
+  destination: (_, __, cb) => cb(null, UPLOADS_DIR),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const fileName = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
+    cb(null, fileName);
+  }
+});
+
+const upload = multer({ storage });
+
+// ----------- DATABASE ----------
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("MongoDB conectado correctamente"))
+  .catch(err => console.error("Error conectando a MongoDB:", err));
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`Servidor escuchando en puerto ${process.env.PORT}`);
+});
+
+// ----------- ENDPOINTS ----------
+
+// PAGINADO OPCIONAL
+app.get("/figuritas", async (req, res) => {
+  try {
+        let { page, per_page } = req.query;
+
+        // Si NO vienen parámetros → retornar todo el dataset
+        if (!page || !per_page) {
+            const figuritas = await Figurita.find();
+            return res.json({
+                total: figuritas.length,
+                paginado: false,
+                data: figuritas
+            });
+        }
+
+        // Si vienen parámetros → convertirlos a número
+        page = parseInt(page);
+        per_page = parseInt(per_page);
+
+        const skip = (page - 1) * per_page;
+
+        const total = await Figurita.countDocuments();
+        const figuritas = await Figurita
+            .find()
+            .skip(skip)
+            .limit(per_page);
+
+        res.json({
+            total,
+            paginado: true,
+            page,
+            per_page,
+            total_pages: Math.ceil(total / per_page),
+            data: figuritas
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error en el servidor" });
+    }
+});
+
+// GET ONE
+app.get("/figuritas/:id", async (req, res) => {
+  try {
+    const item = await Figurita.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: "No encontrado" });
+    res.json(item);
+  } catch {
+    res.status(400).json({ error: "ID inválido" });
+  }
+});
+
+// CREATE
+app.post("/figuritas", upload.single("imagen"), async (req, res) => {
+  try {
+    const { pais, nombre, precio } = req.body;
+
+    let imagenUrl = "";
+    if (req.file) {
+      imagenUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
+
+    const nueva = new Figurita({
+      pais,
+      nombre,
+      precio: Number(precio),
+      imagen: imagenUrl
+    });
+
+    await nueva.save();
+    res.status(201).json(nueva);
+
+  } catch (err) {
+    res.status(400).json({ error: "Error al crear figurita" });
+  }
+});
+
+// UPDATE
+app.put("/figuritas/:id", upload.single("imagen"), async (req, res) => {
+  try {
+    const item = await Figurita.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: "No encontrado" });
+
+    const { pais, nombre, precio } = req.body;
+
+    if (req.file) {
+      // Borrar foto previa (local)
+      if (item.imagen && item.imagen.includes("/uploads/")) {
+        const prevName = item.imagen.split("/uploads/").pop();
+        const prevPath = path.join(UPLOADS_DIR, prevName);
+        if (fs.existsSync(prevPath)) fs.unlinkSync(prevPath);
+      }
+      item.imagen = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
+
+    if (pais) item.pais = pais;
+    if (nombre) item.nombre = nombre;
+    if (precio) item.precio = Number(precio);
+
+    await item.save();
+    res.json(item);
+
+  } catch (err) {
+    res.status(400).json({ error: "Error al actualizar figurita" });
+  }
+});
+
+// DELETE
+app.delete("/figuritas/:id", async (req, res) => {
+  try {
+    const item = await Figurita.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: "No encontrado" });
+
+    if (item.imagen && item.imagen.includes("/uploads/")) {
+      const name = item.imagen.split("/uploads/").pop();
+      const p = path.join(UPLOADS_DIR, name);
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    }
+
+    await Figurita.deleteOne({ _id: req.params.id });
+    res.status(204).send();
+
+  } catch {
+    res.status(400).json({ error: "ID inválido" });
+  }
+});
+
+app.get("/", (_, res) => res.send("Figuritas API funcionando"));

@@ -1,0 +1,165 @@
+{
+  "info": {
+    "name": "Figuritas API",
+    "_postman_id": "c2c79c38-83e2-4b71-8ff3-f16be6a3b333",
+    "description": "Colección para probar la API CRUD de figuritas con paginación, subida de archivo y MongoDB.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET - Listar figuritas (paginado)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/figuritas?page=1&per_page=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "figuritas"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "per_page",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET - Obtener figurita por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/figuritas/{{id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "figuritas",
+            "{{id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST - Crear figurita",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "nombre",
+              "value": "Julian Alvarez",
+              "type": "text"
+            },
+            {
+              "key": "pais",
+              "value": "Argentina",
+              "type": "text"
+            },
+            {
+              "key": "precio",
+              "value": "45000",
+              "type": "text"
+            },
+            {
+              "key": "imagen",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/figuritas",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "figuritas"
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT - Modificar figurita",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "nombre",
+              "value": "Lionel Messi",
+              "type": "text"
+            },
+            {
+              "key": "pais",
+              "value": "Argentina",
+              "type": "text"
+            },
+            {
+              "key": "precio",
+              "value": "500000",
+              "type": "text"
+            },
+            {
+              "key": "imagen",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/figuritas/{{id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "figuritas",
+            "{{id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "DELETE - Eliminar figurita",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/figuritas/{{id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "figuritas",
+            "{{id}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "id",
+      "value": "REEMPLAZAR_ID",
+      "type": "string"
+    }
+  ]
+}

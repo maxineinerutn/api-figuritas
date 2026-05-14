@@ -101,7 +101,7 @@ app.post("/figuritas", upload.single("imagen"), async (req, res) => {
 
     let imagenUrl = "";
     if (req.file) {
-      imagenUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      imagenUrl = `uploads/${req.file.filename}`;
     }
 
     const nueva = new Figurita({

@@ -134,7 +134,7 @@ app.put("/figuritas/:id", upload.single("imagen"), async (req, res) => {
         const prevPath = path.join(UPLOADS_DIR, prevName);
         if (fs.existsSync(prevPath)) fs.unlinkSync(prevPath);
       }
-      item.imagen = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      item.imagen = `uploads/${req.file.filename}`;
     }
 
     if (pais) item.pais = pais;
